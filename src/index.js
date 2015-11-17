@@ -1,4 +1,5 @@
 import most from 'most'
+import hold from '@most/hold'
 import superagent from 'superagent'
 
 // ESLint doesn't like function complexity
@@ -106,14 +107,14 @@ function makeHTTPDriver({eager = false} = {eager: false}) {
       .map(reqOptions => {
         let response$ = createResponse$(reqOptions)
         if (eager || reqOptions.eager) {
-          response$ = response$.hold()
+          response$ = hold(response$)
           response$.drain()
         }
         response$.request = reqOptions
         return response$
-      }).hold()
+      })
     response$$.drain()
-    return response$$
+    return hold(response$$)
   }
 }
 
