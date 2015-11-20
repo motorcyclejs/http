@@ -1,40 +1,36 @@
-import most from 'most'
+var most = require('most')
 
-const now = fn => setTimeout(fn, 0)
+function now(fn) {
+  setTimeout(fn, 0)
+}
 
-function Subject(initial = null) {
-  let _add
-  let _end
-  let _error
+function Subject(initial) {
+  var _add
+  var _end
+  var _error
 
-  const stream = most.create((add, end, error) => {
-    _add = add
-    _end = end
-    _error = error
-    return _error
-  })
-
-  stream.push = v => now(
-    () => typeof _add === `function` ? _add(v) : void 0
+  var stream = most.create(
+    function(add, end, error) {
+      _add = add
+      _end = end
+      _error = error
+      return _error
+    }
   )
 
-  stream.end = () => now(
-    () => typeof _end === `function` ? _end() : void 0
-  )
+  stream.push = function(v) {
+    now( function() {typeof _add === 'function' ? _add(v) : void 0})
+  }
 
-  stream.error = e => now(
-    () => typeof _error === `function` ? _error(e) : void 0
-  )
-
-  stream.plug = value$ => {
+  stream.plug = function(value$) {
     value$.forEach(stream.push)
   }
 
-  if (initial !== null) {
+  if (initial) {
     stream.push(initial)
   }
 
   return stream
 }
 
-export default Subject
+module.exports = Subject
