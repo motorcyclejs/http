@@ -81,7 +81,6 @@ function createResponse$(reqOptions) {
         `Driver must emit either URL strings or objects with parameters.`))
       return () => {} // noop
     }
-
     try {
       request.end((err, res) => {
         if (err) {
@@ -101,9 +100,27 @@ function createResponse$(reqOptions) {
   })
 }
 
+function isolateSource(response$$, scope) {
+  return response$$.filter(res$ =>
+    Array.isArray(res$.request._namespace) &&
+    res$.request._namespace.indexOf(scope) !== -1
+  )
+}
+
+function isolateSink(request$, scope) {
+  return request$.map(req => {
+    if (typeof req === `string`) {
+      return {url: req, _namespace: [scope]}
+    }
+    req._namespace = req._namespace || []
+    req._namespace.push(scope)
+    return req
+  })
+}
+
 function makeHTTPDriver({eager = false} = {eager: false}) {
   return function httpDriver(request$) {
-    let response$$ = request$
+    let _response$$ = request$
       .map(reqOptions => {
         let response$ = createResponse$(reqOptions)
         if (eager || reqOptions.eager) {
@@ -113,8 +130,11 @@ function makeHTTPDriver({eager = false} = {eager: false}) {
         response$.request = reqOptions
         return response$
       })
-    response$$.drain()
-    return hold(response$$)
+    _response$$.drain()
+    let response$$ = hold(_response$$)
+    response$$.isolateSource = isolateSource
+    response$$.isolateSink = isolateSink
+    return response$$
   }
 }
 
