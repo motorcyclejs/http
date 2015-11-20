@@ -20,7 +20,7 @@ const optionsToSuperagent =
     method = `get`,
   }) => {
     if (typeof url !== `string`) {
-      throw new Error(`Please provide a \`url\` property in the request` +
+      throw new Error(`Please provide a \`url\` property in the request ` +
         `options.`)
     }
     const lowerCaseMethod = method.toLowerCase()
