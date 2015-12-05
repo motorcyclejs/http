@@ -78,11 +78,12 @@ const createResponse$ =
   reqOptions =>
     most.create(
       (add, end, error) => {
-        let request =
-          is.typeOf(`string`, reqOptions) || is.typeOf(`object`) ?
-            urlToSuperagent(reqOptions) : null
-
-        if (!is.notNull(request)) {
+        let request
+        if (typeof reqOptions === `string`) {
+          request = urlToSuperagent(reqOptions)
+        } else if (typeof reqOptions === `object`) {
+          request = optionsToSuperagent(reqOptions)
+        } else {
           error(new Error(`Observable of requests given to HTTP ` +
             `Driver must emit either URL strings or objects with parameters.`))
           return () => {} // noop
