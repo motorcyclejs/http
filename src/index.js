@@ -2,6 +2,14 @@ import most from 'most'
 import hold from '@most/hold'
 import superagent from 'superagent'
 
+const notNull = arg => arg !== null
+const typeOf = (type, arg) => typeof arg === type
+
+const is = {
+  notNull,
+  typeOf,
+}
+
 const optionsToSuperagent =
   ({ // eslint-disable-line
     // ESLint doesn't like function complexity
@@ -30,38 +38,32 @@ const optionsToSuperagent =
         lowerCaseMethod
 
     let request = superagent[sanitizedMethod](url)
-    if (typeof request.redirects === `function`) {
-      request = request.redirects(redirects)
-    }
+
+    request = is.typeOf(`function`, request.redirects) ?
+      request.redirects(redirects) :
+      request
     request = request.type(type)
-    if (send !== null) {
-      request = request.send(send)
-    }
-    if (accept !== null) {
-      request = request.accept(accept)
-    }
-    if (query !== null) {
-      request = request.query(query)
-    }
-    if (withCredentials) {
-      request = request.withCredentials()
-    }
-    if (user !== null && password !== null) {
-      request = request.auth(user, password)
-    }
+    request = is.notNull(send) ? request.send(send) : request
+    request = is.notNull(accept) ? request.accept(accept) : request
+    request = is.notNull(query) ? request.query(query) : request
+    request = is.notNull(withCredentials) ? request.withCredentials() : request
+    request = is.notNull(user) && is.notNull(password) ?
+      request.auth(user, password) :
+      request
+
     for (let key in headers) {
       if (headers.hasOwnProperty(key)) {
         request = request.set(key, headers[key])
       }
     }
-    if (field !== null) {
+    if (is.notNull(field)) {
       for (let key in field) {
         if (field.hasOwnProperty(key)) {
           request = request.field(key, field[key])
         }
       }
     }
-    if (attach !== null) {
+    if (is.notNull(attach)) {
       for (let i = attach.length - 1; i >= 0; i--) {
         const a = attach[i]
         request = request.attach(a.name, a.path, a.filename)
