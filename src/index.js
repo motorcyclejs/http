@@ -56,11 +56,9 @@ const optionsToSuperagent =
         request = request.set(key, headers[key])
       }
     }
-    if (is.notNull(field)) {
-      for (let key in field) {
-        if (field.hasOwnProperty(key)) {
-          request = request.field(key, field[key])
-        }
+    for (let key in field) {
+      if (field.hasOwnProperty(key)) {
+        request = request.field(key, field[key])
       }
     }
     if (is.notNull(attach)) {
