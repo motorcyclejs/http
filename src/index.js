@@ -46,7 +46,7 @@ const optionsToSuperagent =
     request = is.notNull(send) ? request.send(send) : request
     request = is.notNull(accept) ? request.accept(accept) : request
     request = is.notNull(query) ? request.query(query) : request
-    request = is.notNull(withCredentials) ? request.withCredentials() : request
+    request = withCredentials ? request.withCredentials() : request
     request = is.notNull(user) && is.notNull(password) ?
       request.auth(user, password) :
       request
