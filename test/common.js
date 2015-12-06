@@ -1,10 +1,10 @@
-'use strict';
 /* global describe, it */
 var assert = require('assert');
 var src = require('../lib/index');
 var Cycle = require('@motorcycle/core');
 var most = require('most');
 var makeHTTPDriver = src.makeHTTPDriver;
+var Subject = require('./support/subject');
 
 function run(uri) {
   describe('makeHTTPDriver', function () {
@@ -62,6 +62,7 @@ function run(uri) {
         var httpDriver = makeHTTPDriver();
         var response$$ = httpDriver(request$);
         response$$.observe(function(response$) {
+          assert.strictEqual(typeof response$.request, 'string');
           assert.strictEqual(response$.request, uri + '/hello');
           response$.observe(function(response) {
             assert.strictEqual(response.status, 200);
@@ -159,6 +160,17 @@ function run(uri) {
       }
     );
 
+    it(`should return response metastream with isolateSource and isolateSink`,
+      function(done) {
+        var request$ = most.just(`${uri}/hello`)
+        var httpDriver = makeHTTPDriver()
+        var response$$ = httpDriver(request$)
+        assert.strictEqual(typeof response$$.isolateSource, `function`)
+        assert.strictEqual(typeof response$$.isolateSink, `function`)
+        done()
+      }
+    )
+
     it('should replay past events',
       function(done){
         var request$ = most.just({
@@ -185,8 +197,37 @@ function run(uri) {
         })
       }
     );
-
   });
+
+  describe(`isolateSink && isolateSource`, () => {
+    it(`should hide repsonses from outside scope`, function(done) {
+      var httpDriver = makeHTTPDriver()
+      var proxyRequest$ = Subject()
+      var response$$ = httpDriver(proxyRequest$)
+
+      var ignoredRequest$ = most.just(uri + '/json')
+      var request$ = most.just(uri + '/hello').delay(10)
+      var scopedRequest$ = response$$.isolateSink(request$, 'foo')
+      var scopedResponse$$ = response$$.isolateSource(response$$, 'foo')
+
+      scopedResponse$$.observe(
+        function(response$) {
+          assert.strictEqual(typeof response$.request, 'object')
+          assert.strictEqual(response$.request.url, uri + '/hello')
+          response$.observe(
+            function(response) {
+              assert.strictEqual(response.status, 200)
+              assert.strictEqual(response.text, `Hello World`)
+              done()
+            }
+          )
+        }
+      )
+
+      proxyRequest$.plug(ignoredRequest$)
+      proxyRequest$.plug(scopedRequest$)
+    })
+  })
 }
 
 module.exports = run;
