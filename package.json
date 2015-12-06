@@ -8,29 +8,31 @@
     "@most/hold": "*"
   },
   "dependencies": {
-    "babel-preset-es2015": "^6.1.2",
-    "superagent": "^1.4.0"
+    "superagent": "1.5.0"
   },
   "devDependencies": {
-    "@most/hold": "^0.1.0",
-    "@motorcycle/core": "^0.1.7",
-    "babel-cli": "^6.1.2",
-    "babel-core": "^6.1.2",
-    "babel-eslint": "^4.1.5",
-    "babelify": "^7.2.0",
-    "body-parser": "^1.14.1",
-    "browserify": "^12.0.1",
-    "browserify-shim": "^3.8.11",
-    "cookie-parser": "^1.4.0",
-    "eslint": "^1.0.0",
-    "eslint-config-cycle": "^3.0.0",
-    "eslint-plugin-cycle": "^1.0.1",
-    "eslint-plugin-no-class": "^0.1.0",
-    "express": "^4.13.3",
-    "mocha": "^2.3.3",
-    "most": "^0.16.0",
-    "uglify-js": "^2.5.0",
-    "zuul": "^3.7.2"
+    "@most/hold": "0.1.1",
+    "@motorcycle/core": "0.1.7",
+    "babel-cli": "6.3.13",
+    "babel-core": "6.3.13",
+    "babel-eslint": "4.1.6",
+    "babel-preset-es2015": "6.3.13",
+    "babelify": "7.2.0",
+    "body-parser": "1.14.1",
+    "browserify": "12.0.1",
+    "browserify-shim": "3.8.11",
+    "cli-release": "1.0.3",
+    "cookie-parser": "1.4.0",
+    "eslint": "1.10.3",
+    "eslint-config-cycle": "3.1.0",
+    "eslint-plugin-cycle": "1.0.2",
+    "eslint-plugin-no-class": "0.1.0",
+    "express": "4.13.3",
+    "mocha": "2.3.4",
+    "most": "0.16.0",
+    "uglify-js": "2.6.1",
+    "validate-commit-message": "3.0.1",
+    "zuul": "3.8.0"
   },
   "scripts": {
     "eslint": "eslint src/",
@@ -42,14 +44,16 @@
     "test": "npm run eslint && npm run test-node && npm run test-browser",
     "browserify": "browserify src/index.js -t babelify -t browserify-shim --standalone MotorcycleHTTPDriver --exclude most --outfile dist/motorcycle-http-driver.js",
     "uglify": "uglifyjs dist/motorcycle-http-driver.js -o dist/motorcycle-http-driver.min.js",
+    "deps": "npm install && npm prune && validate-commit-msg",
+    "start": "npm run deps",
     "precompile-lib": "rm -rf lib/ && mkdir -p lib",
     "compile-lib": "babel -d lib/ src/",
     "dist": "npm run browserify && npm run uglify",
     "prepublish": "npm run compile-lib",
     "release": "npm run release-patch",
-    "release-patch": "git checkout master && npm run dist; git commit -a -m 'Build dist/'; npm version patch && git push origin master --tags && npm publish --access=public",
-    "release-minor": "git checkout master && npm run dist; git commit -a -m 'Build dist/'; npm version minor && git push origin master --tags && npm publish --access=public",
-    "release-major": "git checkout master && npm run dist; git commit -a -m 'Build dist/'; npm version major && git push origin master --tags && npm publish --access=public"
+    "release-patch": "git checkout master && npm run dist; git commit -a -m 'chore(dist): build'; release patch && npm publish --access=public",
+    "release-minor": "git checkout master && npm run dist; git commit -a -m 'chore(dist): build'; release minor && npm publish --access=public",
+    "release-major": "git checkout master && npm run dist; git commit -a -m 'chore(dist): build'; release major && npm publish --access=public"
   },
   "browserify-shim": {
     "most": "global:most"
