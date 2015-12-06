@@ -31,17 +31,13 @@
     "mocha": "2.3.4",
     "most": "0.16.0",
     "uglify-js": "2.6.1",
-    "validate-commit-message": "3.0.1",
-    "zuul": "3.8.0"
+    "validate-commit-message": "3.0.1"
   },
   "scripts": {
-    "eslint": "eslint src/",
+    "lint": "eslint src/",
     "test-node": "mocha test/node.js",
-    "test-browser": "zuul --open --no-coverage --local 4000 -- test/browser.js",
-    "pretest-ci": "npm run compile-lib",
     "pretest": "npm run compile-lib",
-    "test-ci": "npm run eslint && npm run test-node && zuul --no-coverage -- test/browser.js",
-    "test": "npm run eslint && npm run test-node && npm run test-browser",
+    "test": "npm run lint && npm run test-node",
     "browserify": "browserify src/index.js -t babelify -t browserify-shim --standalone MotorcycleHTTPDriver --exclude most --outfile dist/motorcycle-http-driver.js",
     "uglify": "uglifyjs dist/motorcycle-http-driver.js -o dist/motorcycle-http-driver.min.js",
     "deps": "npm install && npm prune && validate-commit-msg",

@@ -39,4 +39,4 @@ app.delete('/delete', function(req, res){
   res.status(200).json({deleted: true})
 })
 
-app.listen(process.env.ZUUL_PORT);
+app.listen(process.env.PORT);
