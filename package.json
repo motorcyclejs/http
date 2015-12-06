@@ -75,5 +75,8 @@
   "bugs": {
     "url": "https://github.com/motorcyclejs/motorcycle-http/issues"
   },
-  "homepage": "https://github.com/motorcyclejs/motorcycle-http#readme"
+  "homepage": "https://github.com/motorcyclejs/motorcycle-http#readme",
+  "contributors": [
+    "Frederik Krautwald <fkrautwald@gmail.com> (https://github.com/Frikki)"
+  ]
 }
