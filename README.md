@@ -1,6 +1,7 @@
-# Motorcycle.js HTTP Driver
+# Motorcycle.js HTTP Driver [![Build Status](https://travis-ci.org/motorcyclejs/http.svg?branch=develop)](https://travis-ci.org/motorcyclejs/http)
 
 The Standard HTTP Driver for motorcycle.js based on superagent.
+
 
 ## Want to Contribute?
 
