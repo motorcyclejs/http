@@ -16,23 +16,23 @@ import most from 'most'
 import {run} from '@motorcycle/core';
 import {makeHTTPDriver} from '@motorcycle/http';
 
-function main(responses) {
+function main(sources) {
   // ...
 }
 
-const drivers = {
+const sources = {
   HTTP: makeHTTPDriver()
 }
 
-run(main, drivers);
+run(main, sources);
 ```
 
 Simple and normal use case:
 ```
-function main(responses) {
+function main(sources) {
   const HELLO_URL = 'http://localhost:8080/hello';
   let request$ = most.just(HELLO_URL);
-  let vtree$ = responses.HTTP
+  let vtree$ = sources.HTTP
     .filter(res$ => res$.request === HELLO_URL)
     .join()
     .map(res => res.text) // We expect this to be "Hello World"
