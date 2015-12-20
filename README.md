@@ -1,5 +1,7 @@
 # Motorcycle.js HTTP Driver [![Build Status](https://travis-ci.org/motorcyclejs/http.svg?branch=develop)](https://travis-ci.org/motorcyclejs/http)
 
+[![Motorcycle.js](https://img.shields.io/badge/Motorcycle.js-compatible-brightgreen.svg)](https://github.com/motorcyclejs) [![isolate](https://img.shields.io/badge/isolate-compatible-brightgreen.svg)](https://github.com/cyclejs/isolate)
+
 The Standard HTTP Driver for motorcycle.js based on superagent.
 
 
