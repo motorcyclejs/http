@@ -4,15 +4,15 @@
   "description": "Standard HTTP driver for Motorcycle.js",
   "main": "lib/index.js",
   "peerDependencies": {
-    "@motorcycle/core": "*",
-    "@most/hold": "*"
+    "@motorcycle/core": "0.2.0"
   },
   "dependencies": {
+    "@most/hold": "0.2.0",
     "superagent": "1.5.0"
   },
   "devDependencies": {
-    "@most/hold": "0.1.1",
-    "@motorcycle/core": "0.1.7",
+    "@most/hold": "0.2.0",
+    "@motorcycle/core": "0.2.0",
     "babel-cli": "6.3.13",
     "babel-core": "6.3.13",
     "babel-eslint": "4.1.6",
