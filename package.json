@@ -1,6 +1,6 @@
 {
   "name": "@motorcycle/http",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Standard HTTP driver for Motorcycle.js",
   "main": "lib/index.js",
   "peerDependencies": {
