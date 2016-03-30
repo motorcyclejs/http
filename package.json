@@ -12,7 +12,7 @@
     "uglify": "uglifyjs dist/motorcycle-http-driver.js -o dist/motorcycle-http-driver.min.js",
     "deps": "npm install && npm prune && validate-commit-msg",
     "start": "npm run deps",
-    "precompile-lib": "rm -rf lib/ && mkdir -p lib",
+    "precompile-lib": "rimraf lib/ && mkdirp lib",
     "compile-lib": "babel -d lib/ src/",
     "dist": "npm run browserify && npm run uglify",
     "prepublish": "npm run compile-lib",
