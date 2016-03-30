@@ -1,109 +1,565 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MotorcycleHTTPDriver = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global, factory) {
-    if (typeof define === "function" && define.amd) {
-        define('@most/hold', ['exports', 'most/lib/source/MulticastSource'], factory);
-    } else if (typeof exports !== "undefined") {
-        factory(exports, require('most/lib/source/MulticastSource'));
-    } else {
-        var mod = {
-            exports: {}
-        };
-        factory(mod.exports, global.MulticastSource);
-        global.mostHold = mod.exports;
-    }
-})(this, function (exports, _MulticastSource) {
-    'use strict';
-
-    Object.defineProperty(exports, "__esModule", {
-        value: true
-    });
-
-    var _MulticastSource2 = _interopRequireDefault(_MulticastSource);
-
-    function _interopRequireDefault(obj) {
-        return obj && obj.__esModule ? obj : {
-            default: obj
-        };
-    }
-
-    function _classCallCheck(instance, Constructor) {
-        if (!(instance instanceof Constructor)) {
-            throw new TypeError("Cannot call a class as a function");
-        }
-    }
-
-    var _createClass = (function () {
-        function defineProperties(target, props) {
-            for (var i = 0; i < props.length; i++) {
-                var descriptor = props[i];
-                descriptor.enumerable = descriptor.enumerable || false;
-                descriptor.configurable = true;
-                if ("value" in descriptor) descriptor.writable = true;
-                Object.defineProperty(target, descriptor.key, descriptor);
-            }
-        }
-
-        return function (Constructor, protoProps, staticProps) {
-            if (protoProps) defineProperties(Constructor.prototype, protoProps);
-            if (staticProps) defineProperties(Constructor, staticProps);
-            return Constructor;
-        };
-    })();
-
-    var hold = function hold(stream) {
-        return new stream.constructor(new _MulticastSource2.default(new Hold(stream.source)));
+  if (typeof define === "function" && define.amd) {
+    define('@most/hold', ['exports', '@most/multicast'], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(exports, require('@most/multicast'));
+  } else {
+    var mod = {
+      exports: {}
     };
+    factory(mod.exports, global.multicast);
+    global.mostHold = mod.exports;
+  }
+})(this, function (exports, _multicast) {
+  'use strict';
 
-    var Hold = (function () {
-        function Hold(source) {
-            _classCallCheck(this, Hold);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-            this.source = source;
-            this.time = -Infinity;
-            this.value = void 0;
-        }
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
 
-        _createClass(Hold, [{
-            key: 'run',
-            value: function run(sink, scheduler) {
-                if (sink._hold !== this) {
-                    sink._hold = this;
-                    sink._holdAdd = sink.add;
-                    sink.add = holdAdd;
-                    sink._holdEvent = sink.event;
-                    sink.event = holdEvent;
-                }
-
-                return this.source.run(sink, scheduler);
-            }
-        }]);
-
-        return Hold;
-    })();
-
-    function holdAdd(sink) {
-        var len = this._holdAdd(sink);
-
-        if (this._hold.time >= 0) {
-            sink.event(this._hold.time, this._hold.value);
-        }
-
-        return len;
+  var _createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
     }
 
-    function holdEvent(t, x) {
-        if (t >= this._hold.time) {
-            this._hold.time = t;
-            this._hold.value = x;
-        }
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
 
-        return this._holdEvent(t, x);
+  // hold :: Stream a -> Stream a
+  var index = function index(stream) {
+    return new stream.constructor(new _multicast.MulticastSource(new Hold(stream.source)));
+  };
+
+  var Hold = function () {
+    function Hold(source) {
+      _classCallCheck(this, Hold);
+
+      this.source = source;
+      this.time = -Infinity;
+      this.value = void 0;
     }
 
-    exports.default = hold;
+    _createClass(Hold, [{
+      key: 'run',
+      value: function run(sink, scheduler) {
+        if (sink._hold !== this) {
+          sink._hold = this;
+          sink._holdAdd = sink.add;
+          sink.add = holdAdd;
+
+          sink._holdEvent = sink.event;
+          sink.event = holdEvent;
+        }
+
+        return this.source.run(sink, scheduler);
+      }
+    }]);
+
+    return Hold;
+  }();
+
+  function holdAdd(sink) {
+    var len = this._holdAdd(sink);
+    if (this._hold.time >= 0) {
+      sink.event(this._hold.time, this._hold.value);
+    }
+    return len;
+  }
+
+  function holdEvent(t, x) {
+    if (t >= this._hold.time) {
+      this._hold.time = t;
+      this._hold.value = x;
+    }
+    return this._holdEvent(t, x);
+  }
+
+  exports.default = index;
 });
 
-},{"most/lib/source/MulticastSource":4}],2:[function(require,module,exports){
+},{"@most/multicast":2}],2:[function(require,module,exports){
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define('@most/multicast', ['exports', '@most/prelude'], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(exports, require('@most/prelude'));
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports, global.prelude);
+    global.mostMulticast = mod.exports;
+  }
+})(this, function (exports, _prelude) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.MulticastSource = undefined;
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  var _createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  var MulticastDisposable = function () {
+    function MulticastDisposable(source, sink) {
+      _classCallCheck(this, MulticastDisposable);
+
+      this.source = source;
+      this.sink = sink;
+    }
+
+    _createClass(MulticastDisposable, [{
+      key: 'dispose',
+      value: function dispose() {
+        var s = this.source;
+        var remaining = s.remove(this.sink);
+        return remaining === 0 && s._dispose();
+      }
+    }]);
+
+    return MulticastDisposable;
+  }();
+
+  function tryEvent(t, x, sink) {
+    try {
+      sink.event(t, x);
+    } catch (e) {
+      sink.error(t, e);
+    }
+  }
+
+  function tryEnd(t, x, sink) {
+    try {
+      sink.end(t, x);
+    } catch (e) {
+      sink.error(t, e);
+    }
+  }
+
+  var dispose = function dispose(disposable) {
+    return disposable.dispose();
+  };
+
+  var emptyDisposable = {
+    dispose: function dispose() {}
+  };
+
+  var MulticastSource = function () {
+    function MulticastSource(source) {
+      _classCallCheck(this, MulticastSource);
+
+      this.source = source;
+      this.sinks = [];
+      this._disposable = emptyDisposable;
+    }
+
+    _createClass(MulticastSource, [{
+      key: 'run',
+      value: function run(sink, scheduler) {
+        var n = this.add(sink);
+
+        if (n === 1) {
+          this._disposable = this.source.run(this, scheduler);
+        }
+
+        return new MulticastDisposable(this, sink);
+      }
+    }, {
+      key: '_dispose',
+      value: function _dispose() {
+        var disposable = this._disposable;
+        this._disposable = void 0;
+        return Promise.resolve(disposable).then(dispose);
+      }
+    }, {
+      key: 'add',
+      value: function add(sink) {
+        this.sinks = (0, _prelude.append)(sink, this.sinks);
+        return this.sinks.length;
+      }
+    }, {
+      key: 'remove',
+      value: function remove(sink) {
+        this.sinks = (0, _prelude.remove)((0, _prelude.findIndex)(sink, this.sinks), this.sinks);
+        return this.sinks.length;
+      }
+    }, {
+      key: 'event',
+      value: function event(time, value) {
+        var s = this.sinks;
+
+        if (s.length === 1) {
+          tryEvent(time, value, s[0]);
+          return;
+        }
+
+        for (var i = 0; i < s.length; ++i) {
+          tryEvent(time, value, s[i]);
+        }
+      }
+    }, {
+      key: 'end',
+      value: function end(time, value) {
+        var s = this.sinks;
+
+        if (s.length === 1) {
+          tryEnd(time, value, s[0]);
+          return;
+        }
+
+        for (var i = 0; i < s.length; ++i) {
+          tryEnd(time, value, s[i]);
+        }
+      }
+    }, {
+      key: 'error',
+      value: function error(time, err) {
+        var s = this.sinks;
+
+        if (s.length === 1) {
+          s[0].error(time, err);
+          return;
+        }
+
+        for (var i = 0; i < s.length; ++i) {
+          s[i].error(time, err);
+        }
+      }
+    }]);
+
+    return MulticastSource;
+  }();
+
+  function multicast(stream) {
+    var source = stream.source;
+    return source instanceof MulticastSource ? stream : new stream.constructor(new MulticastSource(source));
+  }
+
+  exports.MulticastSource = MulticastSource;
+  exports.default = multicast;
+});
+
+},{"@most/prelude":3}],3:[function(require,module,exports){
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define('@most/prelude', ['exports'], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(exports);
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports);
+    global.mostPrelude = mod.exports;
+  }
+})(this, function (exports) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  /** @license MIT License (c) copyright 2010-2016 original author or authors */
+
+  // Non-mutating array operations
+
+  // cons :: a -> [a] -> [a]
+  // a with x prepended
+  function cons(x, a) {
+    var l = a.length;
+    var b = new Array(l + 1);
+    b[0] = x;
+    for (var i = 0; i < l; ++i) {
+      b[i + 1] = a[i];
+    }
+    return b;
+  }
+
+  // append :: a -> [a] -> [a]
+  // a with x appended
+  function append(x, a) {
+    var l = a.length;
+    var b = new Array(l + 1);
+    for (var i = 0; i < l; ++i) {
+      b[i] = a[i];
+    }
+
+    b[l] = x;
+    return b;
+  }
+
+  // drop :: Int -> [a] -> [a]
+  // drop first n elements
+  function drop(n, a) {
+    // eslint-disable-line complexity
+    if (n < 0) {
+      throw new TypeError('n must be >= 0');
+    }
+
+    var l = a.length;
+    if (n === 0 || l === 0) {
+      return a;
+    }
+
+    if (n >= l) {
+      return [];
+    }
+
+    return unsafeDrop(n, a, l - n);
+  }
+
+  // unsafeDrop :: Int -> [a] -> Int -> [a]
+  // Internal helper for drop
+  function unsafeDrop(n, a, l) {
+    var b = new Array(l);
+    for (var i = 0; i < l; ++i) {
+      b[i] = a[n + i];
+    }
+    return b;
+  }
+
+  // tail :: [a] -> [a]
+  // drop head element
+  function tail(a) {
+    return drop(1, a);
+  }
+
+  // copy :: [a] -> [a]
+  // duplicate a (shallow duplication)
+  function copy(a) {
+    var l = a.length;
+    var b = new Array(l);
+    for (var i = 0; i < l; ++i) {
+      b[i] = a[i];
+    }
+    return b;
+  }
+
+  // map :: (a -> b) -> [a] -> [b]
+  // transform each element with f
+  function map(f, a) {
+    var l = a.length;
+    var b = new Array(l);
+    for (var i = 0; i < l; ++i) {
+      b[i] = f(a[i]);
+    }
+    return b;
+  }
+
+  // reduce :: (a -> b -> a) -> a -> [b] -> a
+  // accumulate via left-fold
+  function reduce(f, z, a) {
+    var r = z;
+    for (var i = 0, l = a.length; i < l; ++i) {
+      r = f(r, a[i], i);
+    }
+    return r;
+  }
+
+  // replace :: a -> Int -> [a]
+  // replace element at index
+  function replace(x, i, a) {
+    // eslint-disable-line complexity
+    if (i < 0) {
+      throw new TypeError('i must be >= 0');
+    }
+
+    var l = a.length;
+    var b = new Array(l);
+    for (var j = 0; j < l; ++j) {
+      b[j] = i === j ? x : a[j];
+    }
+    return b;
+  }
+
+  // remove :: Int -> [a] -> [a]
+  // remove element at index
+  function remove(i, a) {
+    // eslint-disable-line complexity
+    if (i < 0) {
+      throw new TypeError('i must be >= 0');
+    }
+
+    var l = a.length;
+    if (l === 0 || i >= l) {
+      // exit early if index beyond end of array
+      return a;
+    }
+
+    if (l === 1) {
+      // exit early if index in bounds and length === 1
+      return [];
+    }
+
+    return unsafeRemove(i, a, l - 1);
+  }
+
+  // unsafeRemove :: Int -> [a] -> Int -> [a]
+  // Internal helper to remove element at index
+  function unsafeRemove(i, a, l) {
+    var b = new Array(l);
+    var j = undefined;
+    for (j = 0; j < i; ++j) {
+      b[j] = a[j];
+    }
+    for (j = i; j < l; ++j) {
+      b[j] = a[j + 1];
+    }
+
+    return b;
+  }
+
+  // removeAll :: (a -> boolean) -> [a] -> [a]
+  // remove all elements matching a predicate
+  function removeAll(f, a) {
+    var l = a.length;
+    var b = new Array(l);
+    var j = 0;
+    for (var x, i = 0; i < l; ++i) {
+      x = a[i];
+      if (!f(x)) {
+        b[j] = x;
+        ++j;
+      }
+    }
+
+    b.length = j;
+    return b;
+  }
+
+  // findIndex :: a -> [a] -> Int
+  // find index of x in a, from the left
+  function findIndex(x, a) {
+    for (var i = 0, l = a.length; i < l; ++i) {
+      if (x === a[i]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  // isArrayLike :: * -> boolean
+  // Return true iff x is array-like
+  function isArrayLike(x) {
+    return x != null && typeof x.length === 'number' && typeof x !== 'function';
+  }
+
+  /** @license MIT License (c) copyright 2010-2016 original author or authors */
+
+  // id :: a -> a
+  var id = function id(x) {
+    return x;
+  };
+
+  // compose :: (b -> c) -> (a -> b) -> (a -> c)
+  var compose = function compose(f, g) {
+    return function (x) {
+      return f(g(x));
+    };
+  };
+
+  // apply :: (a -> b) -> a -> b
+  var apply = function apply(f, x) {
+    return f(x);
+  };
+
+  // curry2 :: ((a, b) -> c) -> (a -> b -> c)
+  function curry2(f) {
+    function curried(a, b) {
+      switch (arguments.length) {
+        case 0:
+          return curried;
+        case 1:
+          return function (b) {
+            return f(a, b);
+          };
+        default:
+          return f(a, b);
+      }
+    }
+    return curried;
+  }
+
+  // curry3 :: ((a, b, c) -> d) -> (a -> b -> c -> d)
+  function curry3(f) {
+    function curried(a, b, c) {
+      // eslint-disable-line complexity
+      switch (arguments.length) {
+        case 0:
+          return curried;
+        case 1:
+          return curry2(function (b, c) {
+            return f(a, b, c);
+          });
+        case 2:
+          return function (c) {
+            return f(a, b, c);
+          };
+        default:
+          return f(a, b, c);
+      }
+    }
+    return curried;
+  }
+
+  exports.cons = cons;
+  exports.append = append;
+  exports.drop = drop;
+  exports.tail = tail;
+  exports.copy = copy;
+  exports.map = map;
+  exports.reduce = reduce;
+  exports.replace = replace;
+  exports.remove = remove;
+  exports.removeAll = removeAll;
+  exports.findIndex = findIndex;
+  exports.isArrayLike = isArrayLike;
+  exports.id = id;
+  exports.compose = compose;
+  exports.apply = apply;
+  exports.curry2 = curry2;
+  exports.curry3 = curry3;
+});
+
+},{}],4:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -266,265 +722,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],3:[function(require,module,exports){
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-/** @author Brian Cavalier */
-/** @author John Hann */
-
-exports.noop = noop;
-exports.identity = identity;
-exports.compose = compose;
-exports.apply = apply;
-
-exports.cons = cons;
-exports.append = append;
-exports.drop = drop;
-exports.tail = tail;
-exports.copy = copy;
-exports.map = map;
-exports.reduce = reduce;
-exports.replace = replace;
-exports.remove = remove;
-exports.removeAll = removeAll;
-exports.findIndex = findIndex;
-exports.isArrayLike = isArrayLike;
-
-function noop() {}
-
-function identity(x) {
-	return x;
-}
-
-function compose(f, g) {
-	return function(x) {
-		return f(g(x));
-	};
-}
-
-function apply(f, x) {
-	return f(x);
-}
-
-function cons(x, array) {
-	var l = array.length;
-	var a = new Array(l + 1);
-	a[0] = x;
-	for(var i=0; i<l; ++i) {
-		a[i + 1] = array[i];
-	}
-	return a;
-}
-
-function append(x, a) {
-	var l = a.length;
-	var b = new Array(l+1);
-	for(var i=0; i<l; ++i) {
-		b[i] = a[i];
-	}
-
-	b[l] = x;
-	return b;
-}
-
-function drop(n, array) {
-	var l = array.length;
-	if(n >= l) {
-		return [];
-	}
-
-	l -= n;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = array[n+i];
-	}
-	return a;
-}
-
-function tail(array) {
-	return drop(1, array);
-}
-
-function copy(array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = array[i];
-	}
-	return a;
-}
-
-function map(f, array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = f(array[i]);
-	}
-	return a;
-}
-
-function reduce(f, z, array) {
-	var r = z;
-	for(var i=0, l=array.length; i<l; ++i) {
-		r = f(r, array[i], i);
-	}
-	return r;
-}
-
-function replace(x, i, array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var j=0; j<l; ++j) {
-		a[j] = i === j ? x : array[j];
-	}
-	return a;
-}
-
-function remove(index, array) {
-	var l = array.length;
-	if(l === 0 || index >= array) { // exit early if index beyond end of array
-		return array;
-	}
-
-	if(l === 1) { // exit early if index in bounds and length === 1
-		return [];
-	}
-
-	return unsafeRemove(index, array, l-1);
-}
-
-function unsafeRemove(index, a, l) {
-	var b = new Array(l);
-	var i;
-	for(i=0; i<index; ++i) {
-		b[i] = a[i];
-	}
-	for(i=index; i<l; ++i) {
-		b[i] = a[i+1];
-	}
-
-	return b;
-}
-
-function removeAll(f, a) {
-	var l = a.length;
-	var b = new Array(l);
-	for(var x, i=0, j=0; i<l; ++i) {
-		x = a[i];
-		if(!f(x)) {
-			b[j] = x;
-			++j;
-		}
-	}
-
-	b.length = j;
-	return b;
-}
-
-function findIndex(x, a) {
-	for (var i = 0, l = a.length; i < l; ++i) {
-		if (x === a[i]) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-function isArrayLike(x){
-   return x != null && typeof x.length === 'number' && typeof x !== 'function';
-}
-
-},{}],4:[function(require,module,exports){
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-/** @author Brian Cavalier */
-/** @author John Hann */
-
-var base = require('../base');
-
-module.exports = MulticastSource;
-
-function MulticastSource(source) {
-	this.source = source;
-	this.sinks = [];
-	this._disposable = void 0;
-}
-
-MulticastSource.prototype.run = function(sink, scheduler) {
-	var n = this.add(sink);
-	if(n === 1) {
-		this._disposable = this.source.run(this, scheduler);
-	}
-
-	return new MulticastDisposable(this, sink);
-};
-
-MulticastSource.prototype._dispose = function() {
-	var disposable = this._disposable;
-	this._disposable = void 0;
-	return Promise.resolve(disposable).then(dispose);
-};
-
-function dispose(disposable) {
-	if(disposable === void 0) {
-		return;
-	}
-	return disposable.dispose();
-}
-
-function MulticastDisposable(source, sink) {
-	this.source = source;
-	this.sink = sink;
-}
-
-MulticastDisposable.prototype.dispose = function() {
-	var s = this.source;
-	var remaining = s.remove(this.sink);
-	return remaining === 0 && s._dispose();
-};
-
-MulticastSource.prototype.add = function(sink) {
-	this.sinks = base.append(sink, this.sinks);
-	return this.sinks.length;
-};
-
-MulticastSource.prototype.remove = function(sink) {
-	this.sinks = base.remove(base.findIndex(sink, this.sinks), this.sinks);
-	return this.sinks.length;
-};
-
-MulticastSource.prototype.event = function(t, x) {
-	var s = this.sinks;
-	if(s.length === 1) {
-		s[0].event(t, x);
-		return;
-	}
-	for(var i=0; i<s.length; ++i) {
-		s[i].event(t, x);
-	}
-};
-
-MulticastSource.prototype.end = function(t, x) {
-	var s = this.sinks;
-	if(s.length === 1) {
-		s[0].end(t, x);
-		return;
-	}
-	for(var i=0; i<s.length; ++i) {
-		s[i].end(t, x);
-	}
-};
-
-MulticastSource.prototype.error = function(t, e) {
-	var s = this.sinks;
-	if(s.length === 1) {
-		s[0].error(t, e);
-		return;
-	}
-	for (var i=0; i<s.length; ++i) {
-		s[i].error(t, e);
-	}
-};
-
-},{"../base":3}],5:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -556,6 +754,8 @@ module.exports = function(arr, fn, initial){
 
 var Emitter = require('emitter');
 var reduce = require('reduce');
+var requestBase = require('./request-base');
+var isObject = require('./is-object');
 
 /**
  * Root reference for iframes.
@@ -601,6 +801,12 @@ function isHost(obj) {
 }
 
 /**
+ * Expose `request`.
+ */
+
+var request = module.exports = require('./request').bind(null, Request);
+
+/**
  * Determine XHR.
  */
 
@@ -629,18 +835,6 @@ request.getXHR = function () {
 var trim = ''.trim
   ? function(s) { return s.trim(); }
   : function(s) { return s.replace(/(^\s*|\s*$)/g, ''); };
-
-/**
- * Check if `obj` is an object.
- *
- * @param {Object} obj
- * @return {Boolean}
- * @api private
- */
-
-function isObject(obj) {
-  return obj === Object(obj);
-}
 
 /**
  * Serialize the given `obj`.
@@ -946,6 +1140,9 @@ Response.prototype.setHeaderProperties = function(header){
 
 Response.prototype.parseBody = function(str){
   var parse = request.parse[this.type];
+  if (!parse && isJSON(this.type)) {
+    parse = request.parse['application/json'];
+  }
   return parse && str && (str.length || str instanceof Object)
     ? parse(str)
     : null;
@@ -1040,12 +1237,11 @@ request.Response = Response;
 
 function Request(method, url) {
   var self = this;
-  Emitter.call(this);
   this._query = this._query || [];
   this.method = method;
   this.url = url;
-  this.header = {};
-  this._header = {};
+  this.header = {}; // preserves header name case
+  this._header = {}; // coerces header names to lowercase
   this.on('end', function(){
     var err = null;
     var res = null;
@@ -1058,6 +1254,8 @@ function Request(method, url) {
       err.original = e;
       // issue #675: return the raw response if the response parsing fails
       err.rawResponse = self.xhr && self.xhr.responseText ? self.xhr.responseText : null;
+      // issue #876: return the http status code if the response parsing fails
+      err.statusCode = self.xhr && self.xhr.status ? self.xhr.status : null;
       return self.callback(err);
     }
 
@@ -1081,45 +1279,13 @@ function Request(method, url) {
 }
 
 /**
- * Mixin `Emitter`.
+ * Mixin `Emitter` and `requestBase`.
  */
 
 Emitter(Request.prototype);
-
-/**
- * Allow for extension
- */
-
-Request.prototype.use = function(fn) {
-  fn(this);
-  return this;
+for (var key in requestBase) {
+  Request.prototype[key] = requestBase[key];
 }
-
-/**
- * Set timeout to `ms`.
- *
- * @param {Number} ms
- * @return {Request} for chaining
- * @api public
- */
-
-Request.prototype.timeout = function(ms){
-  this._timeout = ms;
-  return this;
-};
-
-/**
- * Clear previous timeout.
- *
- * @return {Request} for chaining
- * @api public
- */
-
-Request.prototype.clearTimeout = function(){
-  this._timeout = 0;
-  clearTimeout(this._timer);
-  return this;
-};
 
 /**
  * Abort the request, and clear potential timeout.
@@ -1135,70 +1301,6 @@ Request.prototype.abort = function(){
   this.clearTimeout();
   this.emit('abort');
   return this;
-};
-
-/**
- * Set header `field` to `val`, or multiple fields with one object.
- *
- * Examples:
- *
- *      req.get('/')
- *        .set('Accept', 'application/json')
- *        .set('X-API-Key', 'foobar')
- *        .end(callback);
- *
- *      req.get('/')
- *        .set({ Accept: 'application/json', 'X-API-Key': 'foobar' })
- *        .end(callback);
- *
- * @param {String|Object} field
- * @param {String} val
- * @return {Request} for chaining
- * @api public
- */
-
-Request.prototype.set = function(field, val){
-  if (isObject(field)) {
-    for (var key in field) {
-      this.set(key, field[key]);
-    }
-    return this;
-  }
-  this._header[field.toLowerCase()] = val;
-  this.header[field] = val;
-  return this;
-};
-
-/**
- * Remove header `field`.
- *
- * Example:
- *
- *      req.get('/')
- *        .unset('User-Agent')
- *        .end(callback);
- *
- * @param {String} field
- * @return {Request} for chaining
- * @api public
- */
-
-Request.prototype.unset = function(field){
-  delete this._header[field.toLowerCase()];
-  delete this.header[field];
-  return this;
-};
-
-/**
- * Get case-insensitive header `field` value.
- *
- * @param {String} field
- * @return {String}
- * @api private
- */
-
-Request.prototype.getHeader = function(field){
-  return this._header[field.toLowerCase()];
 };
 
 /**
@@ -1229,16 +1331,22 @@ Request.prototype.type = function(type){
 };
 
 /**
- * Force given parser
+ * Set responseType to `val`. Presently valid responseTypes are 'blob' and 
+ * 'arraybuffer'.
  *
- * Sets the body parser no matter type.
+ * Examples:
  *
- * @param {Function}
+ *      req.get('/')
+ *        .responseType('blob')
+ *        .end(callback);
+ *
+ * @param {String} val
+ * @return {Request} for chaining
  * @api public
  */
 
-Request.prototype.parse = function(fn){
-  this._parser = fn;
+Request.prototype.responseType = function(val){
+  this._responseType = val;
   return this;
 };
 
@@ -1272,13 +1380,29 @@ Request.prototype.accept = function(type){
  *
  * @param {String} user
  * @param {String} pass
+ * @param {Object} options with 'type' property 'auto' or 'basic' (default 'basic')
  * @return {Request} for chaining
  * @api public
  */
 
-Request.prototype.auth = function(user, pass){
-  var str = btoa(user + ':' + pass);
-  this.set('Authorization', 'Basic ' + str);
+Request.prototype.auth = function(user, pass, options){
+  if (!options) {
+    options = {
+      type: 'basic'
+    }
+  }
+
+  switch (options.type) {
+    case 'basic':
+      var str = btoa(user + ':' + pass);
+      this.set('Authorization', 'Basic ' + str);
+    break;
+
+    case 'auto':
+      this.username = user;
+      this.password = pass;
+    break;
+  }
   return this;
 };
 
@@ -1303,28 +1427,6 @@ Request.prototype.query = function(val){
 };
 
 /**
- * Write the field `name` and `val` for "multipart/form-data"
- * request bodies.
- *
- * ``` js
- * request.post('/upload')
- *   .field('foo', 'bar')
- *   .end(callback);
- * ```
- *
- * @param {String} name
- * @param {String|Blob|File} val
- * @return {Request} for chaining
- * @api public
- */
-
-Request.prototype.field = function(name, val){
-  if (!this._formData) this._formData = new root.FormData();
-  this._formData.append(name, val);
-  return this;
-};
-
-/**
  * Queue the given `file` as an attachment to the specified `field`,
  * with optional `filename`.
  *
@@ -1342,9 +1444,15 @@ Request.prototype.field = function(name, val){
  */
 
 Request.prototype.attach = function(field, file, filename){
-  if (!this._formData) this._formData = new root.FormData();
-  this._formData.append(field, file, filename || file.name);
+  this._getFormData().append(field, file, filename || file.name);
   return this;
+};
+
+Request.prototype._getFormData = function(){
+  if (!this._formData) {
+    this._formData = new root.FormData();
+  }
+  return this._formData;
 };
 
 /**
@@ -1389,7 +1497,7 @@ Request.prototype.attach = function(field, file, filename){
 
 Request.prototype.send = function(data){
   var obj = isObject(data);
-  var type = this.getHeader('Content-Type');
+  var type = this._header['content-type'];
 
   // merge
   if (obj && isObject(this._data)) {
@@ -1398,7 +1506,7 @@ Request.prototype.send = function(data){
     }
   } else if ('string' == typeof data) {
     if (!type) this.type('form');
-    type = this.getHeader('Content-Type');
+    type = this._header['content-type'];
     if ('application/x-www-form-urlencoded' == type) {
       this._data = this._data
         ? this._data + '&' + data
@@ -1412,6 +1520,22 @@ Request.prototype.send = function(data){
 
   if (!obj || isHost(data)) return this;
   if (!type) this.type('json');
+  return this;
+};
+
+/**
+ * @deprecated
+ */
+Response.prototype.parse = function serialize(fn){
+  if (root.console) {
+    console.warn("Client-side parse() method has been renamed to serialize(). This method is not compatible with superagent v2.0");
+  }
+  this.serialize(fn);
+  return this;
+};
+
+Response.prototype.serialize = function serialize(fn){
+  this._parser = fn;
   return this;
 };
 
@@ -1550,7 +1674,11 @@ Request.prototype.end = function(fn){
   }
 
   // initiate request
-  xhr.open(this.method, this.url, true);
+  if (this.username && this.password) {
+    xhr.open(this.method, this.url, true, this.username, this.password);
+  } else {
+    xhr.open(this.method, this.url, true);
+  }
 
   // CORS
   if (this._withCredentials) xhr.withCredentials = true;
@@ -1558,7 +1686,7 @@ Request.prototype.end = function(fn){
   // body
   if ('GET' != this.method && 'HEAD' != this.method && 'string' != typeof data && !isHost(data)) {
     // serialize stuff
-    var contentType = this.getHeader('Content-Type');
+    var contentType = this._header['content-type'];
     var serialize = this._parser || request.serialize[contentType ? contentType.split(';')[0] : ''];
     if (!serialize && isJSON(contentType)) serialize = request.serialize['application/json'];
     if (serialize) data = serialize(data);
@@ -1570,6 +1698,10 @@ Request.prototype.end = function(fn){
     xhr.setRequestHeader(field, this.header[field]);
   }
 
+  if (this._responseType) {
+    xhr.responseType = this._responseType;
+  }
+
   // send stuff
   this.emit('request', this);
 
@@ -1579,54 +1711,12 @@ Request.prototype.end = function(fn){
   return this;
 };
 
-/**
- * Faux promise support
- *
- * @param {Function} fulfill
- * @param {Function} reject
- * @return {Request}
- */
-
-Request.prototype.then = function (fulfill, reject) {
-  return this.end(function(err, res) {
-    err ? reject(err) : fulfill(res);
-  });
-}
 
 /**
  * Expose `Request`.
  */
 
 request.Request = Request;
-
-/**
- * Issue a request:
- *
- * Examples:
- *
- *    request('GET', '/users').end(callback)
- *    request('/users').end(callback)
- *    request('/users', callback)
- *
- * @param {String} method
- * @param {String|Function} url or callback
- * @return {Request}
- * @api public
- */
-
-function request(method, url) {
-  // callback
-  if ('function' == typeof url) {
-    return new Request('GET', method).end(url);
-  }
-
-  // url first
-  if (1 == arguments.length) {
-    return new Request('GET', method);
-  }
-
-  return new Request(method, url);
-}
 
 /**
  * GET `url` with optional callback `fn(res)`.
@@ -1736,22 +1826,233 @@ request.put = function(url, data, fn){
   return req;
 };
 
+},{"./is-object":7,"./request":9,"./request-base":8,"emitter":4,"reduce":5}],7:[function(require,module,exports){
 /**
- * Expose `request`.
+ * Check if `obj` is an object.
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api private
  */
+
+function isObject(obj) {
+  return null != obj && 'object' == typeof obj;
+}
+
+module.exports = isObject;
+
+},{}],8:[function(require,module,exports){
+/**
+ * Module of mixed-in functions shared between node and client code
+ */
+var isObject = require('./is-object');
+
+/**
+ * Clear previous timeout.
+ *
+ * @return {Request} for chaining
+ * @api public
+ */
+
+exports.clearTimeout = function _clearTimeout(){
+  this._timeout = 0;
+  clearTimeout(this._timer);
+  return this;
+};
+
+/**
+ * Force given parser
+ *
+ * Sets the body parser no matter type.
+ *
+ * @param {Function}
+ * @api public
+ */
+
+exports.parse = function parse(fn){
+  this._parser = fn;
+  return this;
+};
+
+/**
+ * Set timeout to `ms`.
+ *
+ * @param {Number} ms
+ * @return {Request} for chaining
+ * @api public
+ */
+
+exports.timeout = function timeout(ms){
+  this._timeout = ms;
+  return this;
+};
+
+/**
+ * Faux promise support
+ *
+ * @param {Function} fulfill
+ * @param {Function} reject
+ * @return {Request}
+ */
+
+exports.then = function then(fulfill, reject) {
+  return this.end(function(err, res) {
+    err ? reject(err) : fulfill(res);
+  });
+}
+
+/**
+ * Allow for extension
+ */
+
+exports.use = function use(fn) {
+  fn(this);
+  return this;
+}
+
+
+/**
+ * Get request header `field`.
+ * Case-insensitive.
+ *
+ * @param {String} field
+ * @return {String}
+ * @api public
+ */
+
+exports.get = function(field){
+  return this._header[field.toLowerCase()];
+};
+
+/**
+ * Get case-insensitive header `field` value.
+ * This is a deprecated internal API. Use `.get(field)` instead.
+ *
+ * (getHeader is no longer used internally by the superagent code base)
+ *
+ * @param {String} field
+ * @return {String}
+ * @api private
+ * @deprecated
+ */
+
+exports.getHeader = exports.get;
+
+/**
+ * Set header `field` to `val`, or multiple fields with one object.
+ * Case-insensitive.
+ *
+ * Examples:
+ *
+ *      req.get('/')
+ *        .set('Accept', 'application/json')
+ *        .set('X-API-Key', 'foobar')
+ *        .end(callback);
+ *
+ *      req.get('/')
+ *        .set({ Accept: 'application/json', 'X-API-Key': 'foobar' })
+ *        .end(callback);
+ *
+ * @param {String|Object} field
+ * @param {String} val
+ * @return {Request} for chaining
+ * @api public
+ */
+
+exports.set = function(field, val){
+  if (isObject(field)) {
+    for (var key in field) {
+      this.set(key, field[key]);
+    }
+    return this;
+  }
+  this._header[field.toLowerCase()] = val;
+  this.header[field] = val;
+  return this;
+};
+
+/**
+ * Remove header `field`.
+ * Case-insensitive.
+ *
+ * Example:
+ *
+ *      req.get('/')
+ *        .unset('User-Agent')
+ *        .end(callback);
+ *
+ * @param {String} field
+ */
+exports.unset = function(field){
+  delete this._header[field.toLowerCase()];
+  delete this.header[field];
+  return this;
+};
+
+/**
+ * Write the field `name` and `val` for "multipart/form-data"
+ * request bodies.
+ *
+ * ``` js
+ * request.post('/upload')
+ *   .field('foo', 'bar')
+ *   .end(callback);
+ * ```
+ *
+ * @param {String} name
+ * @param {String|Blob|File|Buffer|fs.ReadStream} val
+ * @return {Request} for chaining
+ * @api public
+ */
+exports.field = function(name, val) {
+  this._getFormData().append(name, val);
+  return this;
+};
+
+},{"./is-object":7}],9:[function(require,module,exports){
+// The node and browser modules expose versions of this with the
+// appropriate constructor function bound as first argument
+/**
+ * Issue a request:
+ *
+ * Examples:
+ *
+ *    request('GET', '/users').end(callback)
+ *    request('/users').end(callback)
+ *    request('/users', callback)
+ *
+ * @param {String} method
+ * @param {String|Function} url or callback
+ * @return {Request}
+ * @api public
+ */
+
+function request(RequestConstructor, method, url) {
+  // callback
+  if ('function' == typeof url) {
+    return new RequestConstructor('GET', method).end(url);
+  }
+
+  // url first
+  if (2 == arguments.length) {
+    return new RequestConstructor('GET', method);
+  }
+
+  return new RequestConstructor(method, url);
+}
 
 module.exports = request;
 
-},{"emitter":2,"reduce":5}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (global){
 'use strict';
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.makeHTTPDriver = exports.createResponse$ = exports.urlToSuperagent = exports.optionsToSuperagent = undefined;
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _most = (typeof window !== "undefined" ? window['most'] : typeof global !== "undefined" ? global['most'] : null);
 
@@ -1830,9 +2131,9 @@ var optionsToSuperagent = function optionsToSuperagent(_ref) {
       request = request.set(key, headers[key]);
     }
   }
-  for (var key in field) {
-    if (field.hasOwnProperty(key)) {
-      request = request.field(key, field[key]);
+  for (var _key in field) {
+    if (field.hasOwnProperty(_key)) {
+      request = request.field(_key, field[_key]);
     }
   }
   if (is.notNull(attach)) {
@@ -1924,5 +2225,5 @@ exports.createResponse$ = createResponse$;
 exports.makeHTTPDriver = makeHTTPDriver;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"@most/hold":1,"superagent":6}]},{},[7])(7)
+},{"@most/hold":1,"superagent":6}]},{},[10])(10)
 });
