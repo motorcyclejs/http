@@ -4,6 +4,7 @@
 
 The Standard HTTP Driver for motorcycle.js based on superagent.
 
+**DEPRECATED!** Please use [the newer Motorcycle.js](https://github.com/motorcyclejs/motorcyclejs)
 
 ## Want to Contribute?
 
